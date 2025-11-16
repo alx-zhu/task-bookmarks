@@ -35,24 +35,15 @@ export default function ContentApp() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  if (!showSearch && !showAdd) {
-    return null;
-  }
-
   const handleClose = () => {
     setShowSearch(false);
     setShowAdd(false);
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-999999 flex items-start justify-center pt-[15vh] px-5"
-      onClick={handleClose}
-    >
-      <div onClick={(e) => e.stopPropagation()}>
-        {showSearch && <SearchOverlay onClose={handleClose} />}
-        {showAdd && <AddBookmarkOverlay onClose={handleClose} />}
-      </div>
-    </div>
+    <>
+      <SearchOverlay open={showSearch} onClose={handleClose} />
+      <AddBookmarkOverlay open={showAdd} onClose={handleClose} />
+    </>
   );
 }
