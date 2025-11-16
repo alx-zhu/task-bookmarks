@@ -1,3 +1,5 @@
+@import "../index.css";
+
 #bookmark-manager-root {
   all: initial;
   font-family: system-ui, -apple-system, sans-serif;

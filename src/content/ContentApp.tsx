@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import SearchOverlay from "./SearchOverlay";
+import AddBookmarkOverlay from "./AddBookmarkOverlay";
 
 export default function ContentApp() {
   const [showSearch, setShowSearch] = useState(false);
@@ -6,30 +8,24 @@ export default function ContentApp() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      console.log("Keydown event detected:", e.key, e);
-      // CMD+K or CTRL+K
-      if ((e.metaKey || e.ctrlKey) && e.key === "k" && !e.shiftKey) {
+      const key = e.key.toLowerCase();
+
+      // CMD+K or CTRL+K (without shift)
+      if ((e.metaKey || e.ctrlKey) && key === "k" && !e.shiftKey) {
         e.preventDefault();
-        console.log("Search overlay triggered (CMD+K)");
         setShowSearch(true);
         setShowAdd(false);
       }
 
       // CMD+SHIFT+K or CTRL+SHIFT+K
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.shiftKey &&
-        (e.key === "k" || e.key === "K")
-      ) {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === "k") {
         e.preventDefault();
-        console.log("Add overlay triggered (CMD+SHIFT+K)");
         setShowAdd(true);
         setShowSearch(false);
       }
 
       // ESC to close
       if (e.key === "Escape") {
-        console.log("Overlays closed (ESC)");
         setShowSearch(false);
         setShowAdd(false);
       }
@@ -43,39 +39,19 @@ export default function ContentApp() {
     return null;
   }
 
+  const handleClose = () => {
+    setShowSearch(false);
+    setShowAdd(false);
+  };
+
   return (
     <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        zIndex: 999999,
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        paddingTop: "20vh",
-      }}
-      onClick={() => {
-        console.log("Overlay background clicked - closing");
-        setShowSearch(false);
-        setShowAdd(false);
-      }}
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-999999 flex items-start justify-center pt-[15vh] px-5"
+      onClick={handleClose}
     >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          minWidth: "500px",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {showSearch && <div>Search Overlay (CMD+K)</div>}
-        {showAdd && <div>Add Bookmark Overlay (CMD+SHIFT+K)</div>}
+      <div onClick={(e) => e.stopPropagation()}>
+        {showSearch && <SearchOverlay onClose={handleClose} />}
+        {showAdd && <AddBookmarkOverlay onClose={handleClose} />}
       </div>
     </div>
   );
