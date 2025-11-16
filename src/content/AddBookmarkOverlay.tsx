@@ -4,6 +4,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { ChevronsDownUp } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface AddBookmarkOverlayProps {
   open: boolean;
@@ -14,129 +28,136 @@ export default function AddBookmarkOverlay({
   open,
   onClose,
 }: AddBookmarkOverlayProps) {
+  const [title, setTitle] = useState(document.title || "Untitled Page");
+  const [url] = useState(window.location.href);
   const [taskInput, setTaskInput] = useState("");
   const [note, setNote] = useState("");
-  const [showAutocomplete, setShowAutocomplete] = useState(false);
-
-  // Get current page info
-  const pageTitle = document.title || "Untitled Page";
+  const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   // Mock existing tasks
   const existingTasks = [
-    "Database optimization",
-    "Backend performance",
-    "React best practices",
-    "React performance",
+    { value: "database-optimization", label: "Database optimization" },
+    { value: "backend-performance", label: "Backend performance" },
+    { value: "react-best-practices", label: "React best practices" },
+    { value: "react-performance", label: "React performance" },
   ];
-
-  const filteredTasks = taskInput
-    ? existingTasks.filter((task) =>
-        task.toLowerCase().includes(taskInput.toLowerCase())
-      )
-    : existingTasks;
-
-  const handleTaskInputChange = (value: string) => {
-    setTaskInput(value);
-    setShowAutocomplete(value.length > 0);
-  };
-
-  const handleTaskSelect = (task: string) => {
-    setTaskInput(task);
-    setShowAutocomplete(false);
-  };
 
   const handleSubmit = () => {
     console.log("Adding bookmark:", {
-      title: pageTitle,
-      url: window.location.href,
+      title,
+      url,
       task: taskInput,
       note,
     });
     onClose();
   };
 
-  const isNewTask =
-    taskInput &&
-    !existingTasks.some((t) => t.toLowerCase() === taskInput.toLowerCase());
+  const handleCreateNewTask = () => {
+    // Create new task with the search value
+    setTaskInput(searchValue);
+    setComboboxOpen(false);
+    setSearchValue("");
+  };
+
+  const selectedTask = existingTasks.find((task) => task.value === taskInput);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[640px] p-6">
-        <div className="space-y-5">
+      <DialogContent className="sm:max-w-2xl">
+        <div className="space-y-6">
           <div className="space-y-2">
-            <Label
-              htmlFor="page-title"
-              className="text-[13px] font-medium text-muted-foreground"
-            >
-              Page Title
+            <Label htmlFor="title" className="text-foreground font-medium">
+              Title
             </Label>
             <Input
-              id="page-title"
-              value={pageTitle}
-              readOnly
-              className="bg-muted/50 text-muted-foreground cursor-default"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-foreground"
             />
           </div>
 
-          <div className="space-y-2 relative">
-            <Label
-              htmlFor="task"
-              className="text-[13px] font-medium text-muted-foreground"
-            >
-              Task
-            </Label>
-            <Input
-              id="task"
-              placeholder="Select or create task..."
-              value={taskInput}
-              onChange={(e) => handleTaskInputChange(e.target.value)}
-              onFocus={() => taskInput && setShowAutocomplete(true)}
-              onBlur={() => setTimeout(() => setShowAutocomplete(false), 200)}
-              autoFocus
-            />
-
-            {showAutocomplete && (
-              <div className="absolute top-full left-0 right-0 mt-0 bg-background border border-border border-t-0 rounded-b-md max-h-40 overflow-y-auto shadow-md z-10">
-                {filteredTasks.map((task) => (
-                  <div
-                    key={task}
-                    onClick={() => handleTaskSelect(task)}
-                    className="py-2.5 px-3 text-sm cursor-pointer hover:bg-muted/50 transition-colors"
-                  >
-                    {task}
-                  </div>
-                ))}
-                {isNewTask && (
-                  <div
-                    onClick={() => handleTaskSelect(taskInput)}
-                    className="py-2.5 px-3 text-sm text-muted-foreground border-t border-border/50 cursor-pointer hover:bg-muted/50 transition-colors"
-                  >
-                    <span className="font-semibold">+ </span>Create "{taskInput}
-                    "
-                  </div>
-                )}
-              </div>
-            )}
+          <div className="space-y-2 w-full">
+            <Label className="text-foreground font-medium">Task</Label>
+            <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={comboboxOpen}
+                  className="w-full justify-between text-foreground font-normal"
+                >
+                  {selectedTask
+                    ? selectedTask.label
+                    : "Select or create task..."}
+                  <ChevronsDownUp className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-(--radix-popover-trigger-width) p-0"
+                align="start"
+              >
+                <Command>
+                  <CommandInput
+                    placeholder="Search or create task..."
+                    className="text-foreground"
+                    value={searchValue}
+                    onValueChange={setSearchValue}
+                  />
+                  <CommandList>
+                    <CommandGroup>
+                      {existingTasks.map((task) => (
+                        <CommandItem
+                          key={task.value}
+                          value={task.label}
+                          onSelect={() => {
+                            setTaskInput(task.value);
+                            setComboboxOpen(false);
+                            setSearchValue("");
+                          }}
+                          className="text-foreground"
+                        >
+                          {task.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <Separator />
+                    {searchValue && (
+                      <CommandGroup>
+                        <CommandItem
+                          className="text-foreground"
+                          onSelect={handleCreateNewTask}
+                          // Force this to always match by giving it keywords that include the search
+                          keywords={[searchValue]}
+                        >
+                          <span className="font-semibold">+ </span>Create new
+                          task: "{searchValue}"
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
-            <Label
-              htmlFor="note"
-              className="text-[13px] font-medium text-muted-foreground"
-            >
+            <Label htmlFor="note" className="text-foreground font-medium">
               Note
             </Label>
             <Textarea
               id="note"
-              placeholder="Why are you saving this? (optional)"
+              placeholder="Why are you saving this?"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="min-h-[60px] resize-y"
+              rows={3}
+              className="text-foreground"
             />
           </div>
         </div>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter>
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
