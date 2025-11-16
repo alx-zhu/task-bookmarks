@@ -4,9 +4,9 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandShortcut,
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
+import { useBookmarks, useTouchBookmark } from "@/hooks/useBookmarks";
 
 interface SearchOverlayProps {
   open: boolean;
@@ -14,32 +14,14 @@ interface SearchOverlayProps {
 }
 
 export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
-  // Mock data for now
-  const mockResults = [
-    {
-      id: "1",
-      title: "Use The Index, Luke - Database Indexing Explained",
-      note: "Explains B-tree vs hash indexes and when to use each",
-      taskName: "Database optimization",
-      url: "https://use-the-index-luke.com",
-    },
-    {
-      id: "2",
-      title: "PostgreSQL Documentation - Index Types",
-      note: "Official comparison of different index strategies",
-      taskName: "Database optimization",
-      url: "https://postgresql.org/docs",
-    },
-    {
-      id: "3",
-      title: "High Performance PostgreSQL",
-      note: "Advanced indexing patterns for complex queries",
-      taskName: "Backend performance",
-      url: "https://example.com",
-    },
-  ];
+  const { data: bookmarks = [] } = useBookmarks();
+  const touchBookmark = useTouchBookmark();
 
-  const handleResultClick = (url: string) => {
+  const handleResultClick = (bookmarkId: string, url: string) => {
+    // Update lastAccessed timestamp
+    touchBookmark.mutate(bookmarkId);
+
+    // Open in new tab
     window.open(url, "_blank");
     onClose();
   };
@@ -50,26 +32,31 @@ export default function SearchOverlay({ open, onClose }: SearchOverlayProps) {
       onOpenChange={onClose}
       title="Search Bookmarks"
       description="Search through your saved bookmarks"
-      className="backdrop-blur-xl"
     >
       <CommandInput placeholder="Search bookmarks..." />
       <CommandList>
-        <CommandEmpty>Start typing to search your bookmarks</CommandEmpty>
-        {mockResults.map((result) => (
+        <CommandEmpty>
+          {bookmarks.length === 0
+            ? "No bookmarks yet. Press CMD+SHIFT+K to add one!"
+            : "No results found"}
+        </CommandEmpty>
+        {bookmarks.map((bookmark) => (
           <CommandItem
-            key={result.id}
-            onSelect={() => handleResultClick(result.url)}
+            key={bookmark.id}
+            onSelect={() => handleResultClick(bookmark.id, bookmark.url)}
+            keywords={[bookmark.title, bookmark.note, bookmark.taskName]}
           >
             <div className="flex flex-col items-start gap-1 p-2 w-full">
-              <div className="font-medium leading-snug">{result.title}</div>
-              <div className="text-sm text-muted-foreground leading-relaxed">
-                {result.note}
-              </div>
+              <div className="font-medium leading-snug">{bookmark.title}</div>
+              {bookmark.note && (
+                <div className="text-sm text-muted-foreground leading-relaxed">
+                  {bookmark.note}
+                </div>
+              )}
               <div className="flex items-center justify-between w-full mt-1">
                 <Badge variant="outline" className="text-muted-foreground">
-                  {result.taskName}
+                  {bookmark.taskName}
                 </Badge>
-                <CommandShortcut>↵</CommandShortcut>
               </div>
             </div>
           </CommandItem>

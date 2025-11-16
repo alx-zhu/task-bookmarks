@@ -16,8 +16,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ChevronsDownUp } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useTasks, useCreateTask } from "@/hooks/useTasks";
+import { useCreateBookmark } from "@/hooks/useBookmarks";
 
 interface AddBookmarkOverlayProps {
   open: boolean;
@@ -35,32 +37,56 @@ export default function AddBookmarkOverlay({
   const [comboboxOpen, setComboboxOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  // Mock existing tasks
-  const existingTasks = [
-    { value: "database-optimization", label: "Database optimization" },
-    { value: "backend-performance", label: "Backend performance" },
-    { value: "react-best-practices", label: "React best practices" },
-    { value: "react-performance", label: "React performance" },
-  ];
+  // Fetch tasks and mutations
+  const { data: tasks = [] } = useTasks();
+  const createTask = useCreateTask();
+  const createBookmark = useCreateBookmark();
 
-  const handleSubmit = () => {
-    console.log("Adding bookmark:", {
-      title,
+  const handleSubmit = async () => {
+    if (!taskInput) return;
+
+    // Find existing task or use searchValue for new task
+    const existingTask = tasks.find((t) => t.id === taskInput);
+    let finalTaskId = taskInput;
+    let finalTaskName = existingTask?.name || searchValue;
+
+    // If creating a new task (taskInput equals searchValue), create it first
+    if (!existingTask && searchValue) {
+      const newTask = await createTask.mutateAsync(searchValue);
+      finalTaskId = newTask.id;
+      finalTaskName = newTask.name;
+    }
+
+    // Create bookmark
+    await createBookmark.mutateAsync({
       url,
-      task: taskInput,
+      title,
       note,
+      taskId: finalTaskId,
+      taskName: finalTaskName,
     });
+
+    // Reset form and close
+    setTitle(document.title || "Untitled Page");
+    setTaskInput("");
+    setNote("");
+    setSearchValue("");
     onClose();
   };
 
   const handleCreateNewTask = () => {
-    // Create new task with the search value
+    // Set taskInput to searchValue to indicate we're creating a new task
     setTaskInput(searchValue);
     setComboboxOpen(false);
-    setSearchValue("");
   };
 
-  const selectedTask = existingTasks.find((task) => task.value === taskInput);
+  const selectedTask = tasks.find((task) => task.id === taskInput);
+  const isNewTask =
+    searchValue &&
+    !tasks.some(
+      (t) =>
+        t.id === taskInput || t.name.toLowerCase() === searchValue.toLowerCase()
+    );
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -86,12 +112,16 @@ export default function AddBookmarkOverlay({
                   variant="outline"
                   role="combobox"
                   aria-expanded={comboboxOpen}
-                  className="w-full justify-between text-foreground font-normal"
+                  className="w-full justify-between text-foreground font-normal cursor-pointer"
                 >
                   {selectedTask
-                    ? selectedTask.label
-                    : "Select or create task..."}
-                  <ChevronsDownUp className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    ? selectedTask.name
+                    : searchValue || "Select or create task..."}
+                  {comboboxOpen ? (
+                    <ChevronsDownUp className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  ) : (
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -107,34 +137,35 @@ export default function AddBookmarkOverlay({
                   />
                   <CommandList>
                     <CommandGroup>
-                      {existingTasks.map((task) => (
+                      {tasks.map((task) => (
                         <CommandItem
-                          key={task.value}
-                          value={task.label}
+                          key={task.id}
+                          value={task.name}
                           onSelect={() => {
-                            setTaskInput(task.value);
+                            setTaskInput(task.id);
+                            setSearchValue(task.name);
                             setComboboxOpen(false);
-                            setSearchValue("");
                           }}
                           className="text-foreground"
                         >
-                          {task.label}
+                          {task.name}
                         </CommandItem>
                       ))}
                     </CommandGroup>
-                    <Separator />
-                    {searchValue && (
-                      <CommandGroup>
-                        <CommandItem
-                          className="text-foreground"
-                          onSelect={handleCreateNewTask}
-                          // Force this to always match by giving it keywords that include the search
-                          keywords={[searchValue]}
-                        >
-                          <span className="font-semibold">+ </span>Create new
-                          task: "{searchValue}"
-                        </CommandItem>
-                      </CommandGroup>
+                    {isNewTask && (
+                      <>
+                        <Separator />
+                        <CommandGroup>
+                          <CommandItem
+                            className="text-foreground"
+                            onSelect={handleCreateNewTask}
+                            keywords={[searchValue]}
+                          >
+                            <span className="font-semibold">+ </span>Create new
+                            task: "{searchValue}"
+                          </CommandItem>
+                        </CommandGroup>
+                      </>
                     )}
                   </CommandList>
                 </Command>
@@ -161,8 +192,15 @@ export default function AddBookmarkOverlay({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!taskInput}>
-            Add Bookmark
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              !taskInput || createBookmark.isPending || createTask.isPending
+            }
+          >
+            {createBookmark.isPending || createTask.isPending
+              ? "Adding..."
+              : "Add Bookmark"}
           </Button>
         </DialogFooter>
       </DialogContent>
