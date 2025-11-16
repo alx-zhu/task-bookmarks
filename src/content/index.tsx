@@ -1,16 +1,14 @@
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ContentApp from "./ContentApp";
-import { ShadowRootProvider } from "@/providers/shadow-root";
-import styles from "./index.css?inline";
-import { StrictMode } from "react";
+import "./content.css";
 
 // Create QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 30,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
       retry: 1,
       refetchOnWindowFocus: false,
     },
@@ -20,29 +18,17 @@ const queryClient = new QueryClient({
   },
 });
 
-// Create container with Shadow DOM
-const hostElement = document.createElement("div");
-hostElement.id = "bookmark-manager-root";
-document.body.appendChild(hostElement);
+// Create a container for our React app
+const container = document.createElement("div");
+container.id = "bookmark-manager-root";
+document.body.appendChild(container);
 
-// Attach shadow root
-const shadowRoot = hostElement.attachShadow({ mode: "closed" });
-
-// Inject styles into shadow DOM
-const styleElement = document.createElement("style");
-styleElement.textContent = styles;
-shadowRoot.appendChild(styleElement);
-
-// Mount React app directly to shadow root
-const root = ReactDOM.createRoot(shadowRoot);
+// Mount React app
+const root = ReactDOM.createRoot(container);
 root.render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ShadowRootProvider value={shadowRoot}>
-        <ContentApp />
-      </ShadowRootProvider>
-    </QueryClientProvider>
-  </StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <ContentApp />
+  </QueryClientProvider>
 );
 
-console.log("Bookmark Manager content script loaded with Shadow DOM");
+console.log("Bookmark Manager content script loaded");
