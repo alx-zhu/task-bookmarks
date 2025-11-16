@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark Manager",
+  "version": "0.0.1",
+  "description": "Task-based bookmark management",
+  "permissions": ["storage", "tabs", "activeTab"],
+  "action": {
+    "default_popup": "index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.tsx"]
+    }
+  ],
+  "commands": {
+    "search": {
+      "suggested_key": {
+        "default": "Ctrl+K",
+        "mac": "Command+K"
+      },
+      "description": "Search bookmarks"
+    },
+    "quick-add": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Quick add bookmark"
+    }
+  }
+}

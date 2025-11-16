@@ -1,0 +1,8 @@
+#bookmark-manager-root {
+  all: initial;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+#bookmark-manager-root * {
+  box-sizing: border-box;
+}
