@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -16,7 +15,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useTasks, useCreateTask } from "@/hooks/useTasks";
 import { useCreateBookmark } from "@/hooks/useBookmarks";
@@ -75,7 +74,6 @@ export default function AddBookmarkOverlay({
   };
 
   const handleCreateNewTask = () => {
-    // Set taskInput to searchValue to indicate we're creating a new task
     setTaskInput(searchValue);
     setComboboxOpen(false);
   };
@@ -90,38 +88,38 @@ export default function AddBookmarkOverlay({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-foreground font-medium">
-              Title
-            </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-foreground"
-            />
-          </div>
+      <DialogContent className="sm:max-w-xl p-0 gap-0">
+        {/* Title Field - Borderless top input */}
+        <div className="border-b">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Bookmark title..."
+            className="border-0 text-base h-12 px-6 rounded-none focus-visible:ring-0"
+          />
+        </div>
 
-          <div className="space-y-2 w-full">
-            <Label className="text-foreground font-medium">Task</Label>
+        {/* Main Content */}
+        <div className="px-6 py-4 space-y-3">
+          {/* Task Selection */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">
+              Task
+            </label>
             <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={comboboxOpen}
-                  className="w-full justify-between text-foreground font-normal cursor-pointer"
+                  className="w-full justify-between font-normal h-9"
                 >
-                  {selectedTask
-                    ? selectedTask.name
-                    : searchValue || "Select or create task..."}
-                  {comboboxOpen ? (
-                    <ChevronsDownUp className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  ) : (
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  )}
+                  <span className="truncate">
+                    {selectedTask
+                      ? selectedTask.name
+                      : searchValue || "Select or create task..."}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -131,7 +129,6 @@ export default function AddBookmarkOverlay({
                 <Command>
                   <CommandInput
                     placeholder="Search or create task..."
-                    className="text-foreground"
                     value={searchValue}
                     onValueChange={setSearchValue}
                   />
@@ -146,7 +143,6 @@ export default function AddBookmarkOverlay({
                             setSearchValue(task.name);
                             setComboboxOpen(false);
                           }}
-                          className="text-foreground"
                         >
                           {task.name}
                         </CommandItem>
@@ -157,7 +153,6 @@ export default function AddBookmarkOverlay({
                         <Separator />
                         <CommandGroup>
                           <CommandItem
-                            className="text-foreground"
                             onSelect={handleCreateNewTask}
                             keywords={[searchValue]}
                           >
@@ -173,26 +168,33 @@ export default function AddBookmarkOverlay({
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="note" className="text-foreground font-medium">
+          {/* Note Field */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">
               Note
-            </Label>
+            </label>
             <Textarea
-              id="note"
               placeholder="Why are you saving this?"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              rows={3}
-              className="text-foreground"
+              className="resize-none min-h-[60px] text-sm"
+              rows={2}
             />
+          </div>
+
+          {/* URL Display - Read-only, subtle */}
+          <div className="pt-2">
+            <div className="text-xs text-muted-foreground truncate">{url}</div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="secondary" onClick={onClose}>
+        {/* Footer Actions */}
+        <div className="border-t px-6 py-3 flex justify-end gap-2 bg-muted/20">
+          <Button variant="ghost" size="sm" onClick={onClose}>
             Cancel
           </Button>
           <Button
+            size="sm"
             onClick={handleSubmit}
             disabled={
               !taskInput || createBookmark.isPending || createTask.isPending
@@ -202,7 +204,7 @@ export default function AddBookmarkOverlay({
               ? "Adding..."
               : "Add Bookmark"}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
