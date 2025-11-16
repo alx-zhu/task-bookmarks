@@ -10,21 +10,18 @@ export default function ContentApp() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
 
-      // CMD+K or CTRL+K (without shift)
       if ((e.metaKey || e.ctrlKey) && key === "k" && !e.shiftKey) {
         e.preventDefault();
         setShowSearch(true);
         setShowAdd(false);
       }
 
-      // CMD+SHIFT+K or CTRL+SHIFT+K
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === "k") {
         e.preventDefault();
         setShowAdd(true);
         setShowSearch(false);
       }
 
-      // ESC to close
       if (e.key === "Escape") {
         setShowSearch(false);
         setShowAdd(false);
