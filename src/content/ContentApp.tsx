@@ -1,49 +1,64 @@
 import { useEffect, useState } from "react";
 import SearchOverlay from "./SearchOverlay";
 import AddBookmarkOverlay from "./AddBookmarkOverlay";
+import type { PageInfo } from "@/types/messages";
+import { isContentToIframeMessage } from "@/types/messages";
+import { messageToParent } from "@/utils/messages";
 
 export default function ContentApp() {
   const [showSearch, setShowSearch] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [pageInfo, setPageInfo] = useState<PageInfo | null>(null);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
+    // Make iframe body transparent so host page shows through
+    document.body.style.backgroundColor = "transparent";
 
-      // CMD+K or CTRL+K (without shift)
-      if ((e.metaKey || e.ctrlKey) && key === "k" && !e.shiftKey) {
-        e.preventDefault();
-        setShowSearch(true);
-        setShowAdd(false);
-      }
+    // Listen for messages from parent (content script)
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      // Type guard the message
+      if (!isContentToIframeMessage(event.data)) return;
 
-      // CMD+SHIFT+K or CTRL+SHIFT+K
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === "k") {
-        e.preventDefault();
-        setShowAdd(true);
-        setShowSearch(false);
-      }
+      const message = event.data;
 
-      // ESC to close
-      if (e.key === "Escape") {
-        setShowSearch(false);
-        setShowAdd(false);
+      switch (message.type) {
+        case "OPEN_SEARCH":
+          setShowSearch(true);
+          setShowAdd(false);
+          setPageInfo(message.pageInfo);
+          break;
+        case "OPEN_ADD":
+          setShowAdd(true);
+          setShowSearch(false);
+          console.log("Received pageInfo:", message.pageInfo);
+          setPageInfo(message.pageInfo);
+          break;
+        case "CLOSE":
+          setShowSearch(false);
+          setShowAdd(false);
+          break;
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   const handleClose = () => {
     setShowSearch(false);
     setShowAdd(false);
+    // Notify parent to hide overlay
+    messageToParent({ type: "CLOSE_OVERLAY" });
   };
 
   return (
     <>
       <SearchOverlay open={showSearch} onClose={handleClose} />
-      <AddBookmarkOverlay open={showAdd} onClose={handleClose} />
+      <AddBookmarkOverlay
+        open={showAdd}
+        onClose={handleClose}
+        pageInfo={pageInfo}
+      />
     </>
   );
 }
