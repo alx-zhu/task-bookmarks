@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,19 @@ import {
 import { ChevronsUpDown, Check, Copy } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useTasks, useCreateTask } from "@/hooks/useTasks";
-import { useCreateBookmark } from "@/hooks/useBookmarks";
+import { useBookmarks, useCreateBookmark } from "@/hooks/useBookmarks";
 import type { PageInfo } from "@/types/messages";
+import type { Task } from "@/types/tasks";
+import { formatDistanceToNow } from "date-fns";
 
 interface AddBookmarkFormProps {
   onClose: () => void;
   pageInfo: PageInfo;
+}
+
+interface TaskWithStats extends Task {
+  bookmarkCount: number;
+  lastAccessed: number;
 }
 
 function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
@@ -39,8 +46,26 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
 
   // Fetch tasks and mutations
   const { data: tasks = [] } = useTasks();
+  const { data: bookmarks = [] } = useBookmarks();
   const createTask = useCreateTask();
   const createBookmark = useCreateBookmark();
+
+  // Enrich tasks with stats client-side
+  const tasksWithStats: TaskWithStats[] = useMemo(
+    () =>
+      tasks.map((task) => {
+        const taskBookmarks = bookmarks.filter((b) => b.taskId === task.id);
+        return {
+          ...task,
+          bookmarkCount: taskBookmarks.length,
+          lastAccessed:
+            taskBookmarks.length > 0
+              ? Math.max(...taskBookmarks.map((b) => b.lastAccessed))
+              : task.createdAt,
+        };
+      }),
+    [tasks, bookmarks]
+  );
 
   const handleSubmit = async () => {
     if (!taskInput || !url) return;
@@ -87,6 +112,7 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
 
   return (
     <DialogContent className="sm:max-w-xl p-0 gap-0">
+      <DialogTitle hidden>Add Bookmark</DialogTitle>
       {/* Title Field - Borderless top input */}
       <div className="border-b">
         <Input
@@ -132,7 +158,7 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
                 />
                 <CommandList>
                   <CommandGroup>
-                    {tasks.map((task) => (
+                    {tasksWithStats.map((task) => (
                       <CommandItem
                         key={task.id}
                         value={task.name}
@@ -140,11 +166,27 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
                           setTaskInput(task.id);
                           setComboboxOpen(false);
                         }}
-                        className="flex items-center justify-between"
+                        className="flex items-center justify-between py-3"
                       >
-                        <span>{task.name}</span>
+                        <div className="flex flex-col gap-1 flex-1 min-w-0">
+                          <span className="font-medium">{task.name}</span>
+                          {task.bookmarkCount > 0 && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>
+                                {task.bookmarkCount} bookmark
+                                {task.bookmarkCount !== 1 ? "s" : ""}
+                              </span>
+                              <span>•</span>
+                              <span>
+                                {formatDistanceToNow(task.lastAccessed, {
+                                  addSuffix: true,
+                                })}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                         {selectedTask?.id === task.id && (
-                          <Check className="h-4 w-4" />
+                          <Check className="h-4 w-4 ml-2 shrink-0" />
                         )}
                       </CommandItem>
                     ))}

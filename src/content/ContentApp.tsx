@@ -30,7 +30,6 @@ export default function ContentApp() {
         case "OPEN_ADD":
           setShowAdd(true);
           setShowSearch(false);
-          console.log("Received pageInfo:", message.pageInfo);
           setPageInfo(message.pageInfo);
           break;
         case "CLOSE":
