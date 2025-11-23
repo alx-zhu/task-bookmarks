@@ -4,6 +4,8 @@ import { isIframeToContentMessage } from "@/types/messages";
 // Create iframe for complete style isolation
 const iframe = document.createElement("iframe");
 iframe.id = "bookmark-manager-iframe";
+const extensionOrigin = chrome.runtime.getURL("").slice(0, -1); // Remove trailing slash
+iframe.allow = `clipboard-write self ${extensionOrigin}`;
 iframe.style.cssText = `
   position: fixed;
   top: 0;

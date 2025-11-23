@@ -15,7 +15,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, Check, Copy } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useTasks, useCreateTask } from "@/hooks/useTasks";
 import { useCreateBookmark } from "@/hooks/useBookmarks";
@@ -33,6 +33,7 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
   const [note, setNote] = useState("");
   const [comboboxOpen, setComboboxOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [urlCopied, setUrlCopied] = useState(false);
 
   const url = pageInfo.url;
 
@@ -73,13 +74,16 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
     setComboboxOpen(false);
   };
 
+  const handleCopyUrl = async () => {
+    await navigator.clipboard.writeText(url);
+    setUrlCopied(true);
+    setTimeout(() => setUrlCopied(false), 2000);
+  };
+
   const selectedTask = tasks.find((task) => task.id === taskInput);
-  const isNewTask =
+  const searchIsNewTask =
     searchValue &&
-    !tasks.some(
-      (t) =>
-        t.id === taskInput || t.name.toLowerCase() === searchValue.toLowerCase()
-    );
+    !tasks.some((t) => t.name.toLowerCase() === searchValue.toLowerCase());
 
   return (
     <DialogContent className="sm:max-w-xl p-0 gap-0">
@@ -134,15 +138,18 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
                         value={task.name}
                         onSelect={() => {
                           setTaskInput(task.id);
-                          setSearchValue(task.name);
                           setComboboxOpen(false);
                         }}
+                        className="flex items-center justify-between"
                       >
-                        {task.name}
+                        <span>{task.name}</span>
+                        {selectedTask?.id === task.id && (
+                          <Check className="h-4 w-4" />
+                        )}
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                  {isNewTask && (
+                  {searchIsNewTask && (
                     <>
                       <Separator />
                       <CommandGroup>
@@ -176,14 +183,31 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
           />
         </div>
 
-        {/* URL Display - Read-only, subtle */}
-        <div className="pt-2">
-          <div className="text-xs text-muted-foreground truncate">{url}</div>
+        {/* URL Display - Clickable to copy */}
+        <div className="space-y-1.5">
+          {/* <label className="text-xs text-muted-foreground uppercase tracking-wide">
+            URL
+          </label> */}
+          <button
+            onClick={handleCopyUrl}
+            className="w-full flex items-center gap-2 px-3 py-1 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors text-left group"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-xs text-muted-foreground truncate">
+                {url}
+              </div>
+            </div>
+            {urlCopied ? (
+              <Check className="h-4 w-4 text-green-600 shrink-0" />
+            ) : (
+              <Copy className="h-4 w-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+            )}
+          </button>
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="border-t px-6 py-3 flex justify-end gap-2 bg-muted/20">
+      <div className="border-t px-6 py-4 flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onClose}>
           Cancel
         </Button>
