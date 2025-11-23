@@ -23,18 +23,18 @@ import type { PageInfo } from "@/types/messages";
 
 interface AddBookmarkFormProps {
   onClose: () => void;
-  pageInfo: PageInfo | null;
+  pageInfo: PageInfo;
 }
 
 function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
   // Initialize with the page title
-  const [title, setTitle] = useState(pageInfo?.title || "");
+  const [title, setTitle] = useState(pageInfo.title);
   const [taskInput, setTaskInput] = useState("");
   const [note, setNote] = useState("");
   const [comboboxOpen, setComboboxOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const url = pageInfo?.url || "";
+  const url = pageInfo.url;
 
   // Fetch tasks and mutations
   const { data: tasks = [] } = useTasks();
@@ -94,7 +94,7 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 py-4 space-y-3">
+      <div className="px-6 py-4 space-y-3 overflow-hidden">
         {/* Task Selection */}
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground uppercase tracking-wide">
