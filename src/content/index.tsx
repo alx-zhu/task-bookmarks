@@ -86,8 +86,15 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
   // Type guard the message
   if (!isIframeToContentMessage(event.data)) return;
 
-  if (event.data.type === "CLOSE_OVERLAY") {
-    hideOverlay();
+  switch (event.data.type) {
+    case "SHOW_OVERLAY":
+      showOverlay();
+      break;
+    case "CLOSE_OVERLAY":
+      hideOverlay();
+      iframe.blur();
+      document.body.focus();
+      break;
   }
 });
 

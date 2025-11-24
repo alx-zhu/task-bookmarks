@@ -14,7 +14,7 @@ export type ContentToIframeMessage =
 
 // Messages sent from iframe to content script
 export type IframeToContentMessage = {
-  type: "CLOSE_OVERLAY";
+  type: "SHOW_OVERLAY" | "CLOSE_OVERLAY";
 };
 
 export interface PageInfo {

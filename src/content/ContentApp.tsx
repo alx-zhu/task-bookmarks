@@ -50,6 +50,37 @@ export default function ContentApp() {
     messageToParent({ type: "CLOSE_OVERLAY" });
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+
+      // CMD+K or CTRL+K (without shift)
+      if ((e.metaKey || e.ctrlKey) && key === "k" && !e.shiftKey) {
+        e.preventDefault();
+        messageToParent({ type: "SHOW_OVERLAY" });
+        setShowSearch(true);
+        setShowAdd(false);
+      }
+
+      // CMD+SHIFT+K or CTRL+SHIFT+K
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === "k") {
+        e.preventDefault();
+        messageToParent({ type: "SHOW_OVERLAY" });
+        setShowAdd(true);
+        setShowSearch(false);
+      }
+
+      // ESC to close
+      if (e.key === "Escape" && (showSearch || showAdd)) {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showSearch, showAdd]);
+
   return (
     <>
       <SearchOverlay open={showSearch} onClose={handleClose} />

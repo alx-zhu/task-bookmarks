@@ -111,7 +111,10 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
     !tasks.some((t) => t.name.toLowerCase() === searchValue.toLowerCase());
 
   return (
-    <DialogContent className="sm:max-w-xl p-0 gap-0">
+    <DialogContent
+      className="sm:max-w-xl p-0 gap-0"
+      aria-describedby="add-bookmark-content"
+    >
       <DialogTitle hidden>Add Bookmark</DialogTitle>
       {/* Title Field - Borderless top input */}
       <div className="border-b">
@@ -240,9 +243,9 @@ function AddBookmarkForm({ onClose, pageInfo }: AddBookmarkFormProps) {
               </div>
             </div>
             {urlCopied ? (
-              <Check className="h-4 w-4 text-green-600 shrink-0" />
+              <Check className="h-3 w-3 text-green-600 shrink-0" />
             ) : (
-              <Copy className="h-4 w-4 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+              <Copy className="h-3 w-3 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
             )}
           </button>
         </div>
